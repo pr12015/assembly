@@ -2,6 +2,16 @@
 str1: .ascii "Unesite N: \0"
 str2: .ascii "Unesite string: \0"
 strlen2 =.-str2
+str3: .ascii "Greska u konverziji!\n\0"
+str3len =.-str3
+str4: .ascii "Uneli ste prazan string!\n\0"
+str4len =.-str4
+str5: .ascii "Broj reci sa svim malim slovima: \0"
+str5len =.-str5
+str6: .ascii "Izlazni string: \0"
+str6len =.-str6
+new_line: .ascii "\n\0"
+new_line_len = 2
 br_max = 5
 decimalni_br: .fill br_max, 1, 0 
 strlen1 = 11
@@ -84,10 +94,13 @@ broj_reci: .long 0
 
 main:
 	ispis str1, strlen1
-	unos string	
+	unos string
+	leal string, %esi	
+	cmpb $10, (%esi)
+	je prazan_string
 	zui string
-	cmpl $1, %edx
-	je main
+	cmpl $0, %edx
+	ja greska_u_konverziji
 	movl %eax, broj_reci
 	
 unos_stringa:
@@ -95,24 +108,39 @@ unos_stringa:
 	unos string
 	leal string, %esi
 	cmpb $10, (%esi)
-	je unos_stringa
+	je prazan_string1
 	izmeni_string1 string, broj_reci 
 	pushl %edx
-	ispis string, str_max
+	#ispis string, str_max
 	popl %edx
 	#movl broj_reci, %eax
 	call mala_slova
 	pushl %eax
+	ispis str6, str6len
 	ispis string, str_max
 	popl %eax
 	iuz decimalni_br		# iuz konvertuje broj iz registra %eax u znakovni oblik i smesta ga u decimalni_br
+	ispis str5, str5len
 	ispis decimalni_br, br_max
+	ispis new_line, new_line_len
 
 
 kraj:
 	movl $1, %eax
 	movl $0, %ebx
 	int $0x80
+	
+prazan_string:
+	ispis str4, str4len
+	jmp main
+	
+prazan_string1:
+	ispis str4, str4len
+	jmp unos_stringa
+
+greska_u_konverziji:
+	ispis str3, str3len
+	jmp main
 #
 # KRAJ GLAVNOG PROGRAMA
 ###############################################	
@@ -131,11 +159,14 @@ dec_cifra1_zui:
 	movb (%esi), %bl
 	cmpb $10, %bl	# Ako smo dolsi do entera ( ascii 10 ) zavrsili smo konverziju
 	je kraj_dec
+	cmpb $57, %bl
+	ja i_greska
 	andb %bl, %bl
 	jz kraj_dec
 	subb $'0', %bl
 	mull %ecx
-	addl %ebx, %eax	
+	jo i_greska
+	addl %ebx, %eax
 	incl %esi
 	jmp dec_cifra1_zui
 kraj_dec:
@@ -202,6 +233,8 @@ izmeni_reci:			# Potprogram za modifikaciju N reci
 petlja:
 	cmpl %ebx, %eax
 	je kraj_petlje		# Ako smo obradili trazen broj reci, zavrsavamo
+	cmpl $10, (%edx)
+	je kraj_petlje
 	cmpl $1, %edi	
 	je nova_rec  		# Indikator prelaska na novu rec ( %edi == 1 )
 	
