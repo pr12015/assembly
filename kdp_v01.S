@@ -95,11 +95,11 @@ broj_reci: .long 0
 main:
 	ispis str1, strlen1
 	unos string
-	leal string, %esi	
-	cmpb $10, (%esi)
+	leal string, %esi		
+	cmpb $10, (%esi)		# Da li je string prazan
 	je prazan_string
 	zui string
-	cmpl $0, %edx
+	cmpl $0, %edx			# Greska u konverziji
 	ja greska_u_konverziji
 	movl %eax, broj_reci
 	
@@ -156,6 +156,8 @@ dec_cifra1_zui:
 	je kraj_dec
 	cmpb $57, %bl
 	ja i_greska
+	cmpb $'0', %bl
+	jb i_greska
 	andb %bl, %bl
 	jz kraj_dec
 	subb $'0', %bl
@@ -222,7 +224,7 @@ izmeni_reci:			# Potprogram za modifikaciju N reci
 	movl 12(%ebp), %edx
 	xorl %ebx, %ebx 	# Brojac izmenjenih reci
 	xorl %edi, %edi 	# Indikator prelaska na novu rec
-	movl broj_reci, %eax
+	#movl broj_reci, %eax
 	
 petlja:
 	cmpl %ebx, %eax
